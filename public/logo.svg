@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="yomilogのロゴ">
+  <title>yomilog</title>
+  <style>
+    :root { --ink: #3c464e; --accent: #0f766e; --paper: #ffffff; }
+    @media (prefers-color-scheme: dark) {
+      :root { --ink: #cdd5da; --accent: #3fc1b3; --paper: #15191c; }
+    }
+  </style>
+  <path d="M10 14h18a6 6 0 0 1 6 6v32a8 8 0 0 0-8-6H10z" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M54 14H36a6 6 0 0 0-6 6v32a8 8 0 0 1 8-6h16z" fill="var(--accent)"/>
+  <path d="M40 26h8M40 33h8" stroke="var(--paper)" stroke-width="2.5" stroke-linecap="round"/>
+</svg>
