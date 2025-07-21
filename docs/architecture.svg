@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 420" role="img" aria-label="yomilogのアーキテクチャ図">
+  <title>yomilogのアーキテクチャ。UIが台帳と集計とチャート生成を組み合わせ、localStorageへ保存する。</title>
+  <style>
+    svg { --paper: #f4f5f4; --box: #ffffff; --ink: #20262a; --muted: #66707a; --line: #aeb6ba; --accent: #0f766e; }
+    @media (prefers-color-scheme: dark) {
+      svg { --paper: #15191c; --box: #1d2226; --ink: #e6e8e7; --muted: #98a2a8; --line: #4a545a; --accent: #3fc1b3; }
+    }
+    text { font-family: "Hiragino Sans", "Noto Sans JP", sans-serif; fill: var(--ink); }
+    .name { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; font-weight: 600; }
+    .sub { font-size: 11px; fill: var(--muted); }
+    .label { font-size: 10px; fill: var(--muted); }
+    .box { fill: var(--box); stroke: var(--line); }
+    .ext { fill: none; stroke: var(--muted); stroke-dasharray: 5 4; }
+    .flow { fill: none; stroke: var(--accent); stroke-width: 1.5; }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L8 4L0 8z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+
+  <rect width="780" height="420" fill="var(--paper)"/>
+  <text x="40" y="46" font-size="16" font-weight="700">yomilog のアーキテクチャ</text>
+
+  <rect class="box" x="40" y="140" width="180" height="160" rx="10"/>
+  <text x="130" y="200" text-anchor="middle" font-size="14" font-weight="600">ダッシュボードUI</text>
+  <text x="130" y="224" text-anchor="middle" class="name">app.ts</text>
+  <text x="130" y="248" text-anchor="middle" class="sub">フォーム・カード・一覧</text>
+
+  <rect class="box" x="320" y="76" width="200" height="58" rx="8"/>
+  <text x="336" y="100" class="name">log.ts</text>
+  <text x="336" y="120" class="sub">記録の台帳と検証・入出力</text>
+
+  <rect class="box" x="320" y="160" width="200" height="58" rx="8"/>
+  <text x="336" y="184" class="name">stats.ts</text>
+  <text x="336" y="204" class="sub">月間集計・分布・継続日数</text>
+
+  <rect class="box" x="320" y="244" width="200" height="58" rx="8"/>
+  <text x="336" y="268" class="name">chart.ts</text>
+  <text x="336" y="288" class="sub">棒・ドーナツのSVG生成</text>
+
+  <rect class="box" x="320" y="328" width="200" height="58" rx="8"/>
+  <text x="336" y="352" class="name">demo.ts</text>
+  <text x="336" y="372" class="sub">固定シードのデモデータ</text>
+
+  <rect class="ext" x="600" y="76" width="140" height="58" rx="8"/>
+  <text x="670" y="100" text-anchor="middle" class="name">localStorage</text>
+  <text x="670" y="120" text-anchor="middle" class="sub">ブラウザ内に保存</text>
+
+  <path class="flow" d="M220 168 C 264 168 276 105 320 105" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <path class="flow" d="M220 196 C 264 196 276 189 320 189" marker-end="url(#arrow)"/>
+  <path class="flow" d="M220 252 C 264 252 276 273 320 273" marker-end="url(#arrow)"/>
+  <path class="flow" d="M220 280 C 264 280 276 357 320 357" marker-end="url(#arrow)"/>
+
+  <path class="flow" d="M520 105 H 598" marker-end="url(#arrow)"/>
+  <text x="559" y="96" text-anchor="middle" class="label">JSON</text>
+
+  <text x="270" y="150" text-anchor="middle" class="label">記録</text>
+  <text x="270" y="214" text-anchor="middle" class="label">集計</text>
+  <text x="270" y="296" text-anchor="middle" class="label">SVG文字列</text>
+</svg>
