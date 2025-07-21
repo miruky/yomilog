@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Entry } from './log';
-import { genreShare, lastMonths, monthlyPages, streaks, summarize } from './stats';
+import { dailyPages, genreShare, lastMonths, monthlyPages, streaks, summarize } from './stats';
 
 let seq = 0;
 function entry(date: string, pages: number, genre = '小説', finished = false): Entry {
@@ -31,6 +31,27 @@ describe('monthlyPages', () => {
   it('範囲外の古い記録は数えない', () => {
     const result = monthlyPages([entry('2020-01-01', 100)], '2026-06-13', 12);
     expect(result.every((m) => m.pages === 0)).toBe(true);
+  });
+});
+
+describe('dailyPages', () => {
+  it('当日を末尾に日別合計を昇順で返す', () => {
+    const entries = [entry('2026-06-13', 30), entry('2026-06-13', 20), entry('2026-06-11', 40)];
+    const result = dailyPages(entries, '2026-06-13', 3);
+    expect(result).toEqual([
+      { date: '2026-06-11', pages: 40, weekday: 4 },
+      { date: '2026-06-12', pages: 0, weekday: 5 },
+      { date: '2026-06-13', pages: 50, weekday: 6 },
+    ]);
+  });
+
+  it('既定では53週ぶんの日数を返す', () => {
+    expect(dailyPages([], '2026-06-13').length).toBe(371);
+  });
+
+  it('範囲外の記録は数えない', () => {
+    const result = dailyPages([entry('2000-01-01', 100)], '2026-06-13', 7);
+    expect(result.every((d) => d.pages === 0)).toBe(true);
   });
 });
 
