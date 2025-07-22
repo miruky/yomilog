@@ -15,6 +15,12 @@ export interface GenreShare {
   ratio: number; // 0..1
 }
 
+export interface DayPages {
+  date: string; // YYYY-MM-DD
+  pages: number;
+  weekday: number; // 0=日 .. 6=土
+}
+
 export interface Summary {
   monthPages: number;
   yearPages: number;
@@ -61,6 +67,23 @@ export function monthlyPages(entries: Entry[], today: string, n = 12): MonthPage
     pages: byMonth.get(month)?.pages ?? 0,
     entries: byMonth.get(month)?.entries ?? 0,
   }));
+}
+
+// todayを末尾に、過去days日ぶんの日別ページ数を昇順で返す(記録のない日は0)。
+// ヒートマップが週単位の列で揃うよう、既定は53週=371日。
+export function dailyPages(entries: Entry[], today: string, days = 371): DayPages[] {
+  const byDay = new Map<string, number>();
+  for (const e of entries) {
+    byDay.set(e.date, (byDay.get(e.date) ?? 0) + e.pages);
+  }
+  const end = toUtc(today);
+  const out: DayPages[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const ms = end - i * DAY_MS;
+    const date = fromUtc(ms);
+    out.push({ date, pages: byDay.get(date) ?? 0, weekday: new Date(ms).getUTCDay() });
+  }
+  return out;
 }
 
 // ページ数の多い順。top件を超えるぶんは「その他」へまとめる。

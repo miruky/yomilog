@@ -163,3 +163,104 @@ export function donutChart(
     `</svg>`
   );
 }
+
+export interface HeatDay {
+  date: string; // YYYY-MM-DD
+  pages: number;
+  weekday: number; // 0=日 .. 6=土
+}
+
+// 0(無記録)と1〜4の5段階。閾値は最大値を四分位で割る。
+export function heatLevel(pages: number, max: number): number {
+  if (pages <= 0) return 0;
+  if (max <= 0) return 0;
+  const r = pages / max;
+  if (r <= 0.25) return 1;
+  if (r <= 0.5) return 2;
+  if (r <= 0.75) return 3;
+  return 4;
+}
+
+const MONTH_ABBR = [
+  '1月',
+  '2月',
+  '3月',
+  '4月',
+  '5月',
+  '6月',
+  '7月',
+  '8月',
+  '9月',
+  '10月',
+  '11月',
+  '12月',
+];
+
+// 年間の読書量を曜日×週のマス目で描く暦。色はアクセント1色の濃淡(.lvl-0..4)。
+export function heatmap(days: HeatDay[]): string {
+  const cell = 11;
+  const gap = 3;
+  const step = cell + gap;
+  const padTop = 18;
+  const padLeft = 16;
+
+  if (days.length === 0) {
+    return `<svg viewBox="0 0 ${padLeft + step} ${padTop + step * 7}" class="chart-heat" role="img" aria-label="読書の暦。記録なし"></svg>`;
+  }
+
+  // 先頭の週を日曜始まりに揃えるための空きセル数。
+  const lead = days[0]?.weekday ?? 0;
+  const totalCells = lead + days.length;
+  const cols = Math.ceil(totalCells / 7);
+  const width = padLeft + cols * step;
+  const height = padTop + 7 * step;
+
+  const max = Math.max(0, ...days.map((d) => d.pages));
+  const active = days.filter((d) => d.pages > 0).length;
+
+  const cells: string[] = [];
+  const monthMarks: string[] = [];
+  let lastMonth = '';
+
+  days.forEach((d, i) => {
+    const cellIndex = lead + i;
+    const col = Math.floor(cellIndex / 7);
+    const row = cellIndex % 7;
+    const x = padLeft + col * step;
+    const y = padTop + row * step;
+    const level = heatLevel(d.pages, max);
+    const note = d.pages === 0 ? '記録なし' : `${d.pages}ページ`;
+    cells.push(
+      `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="2" class="heat-cell lvl-${level}" style="--c:${col}">` +
+        `<title>${escapeXml(d.date)}: ${note}</title></rect>`,
+    );
+    const month = d.date.slice(0, 7);
+    if (row === 0 && month !== lastMonth) {
+      lastMonth = month;
+      const mi = Number(d.date.slice(5, 7)) - 1;
+      monthMarks.push(
+        `<text x="${x}" y="${padTop - 6}" class="heat-month">${escapeXml(MONTH_ABBR[mi] ?? '')}</text>`,
+      );
+    }
+  });
+
+  const weekdayLabels = [
+    { row: 1, label: '月' },
+    { row: 3, label: '水' },
+    { row: 5, label: '金' },
+  ]
+    .map(
+      (w) =>
+        `<text x="0" y="${padTop + w.row * step + cell - 2}" class="heat-wd">${w.label}</text>`,
+    )
+    .join('');
+
+  return (
+    `<svg viewBox="0 0 ${width} ${height}" class="chart-heat" role="img" ` +
+    `aria-label="${escapeXml(`読書の暦。${days.length}日のうち${active}日に記録あり`)}">` +
+    monthMarks.join('') +
+    weekdayLabels +
+    cells.join('') +
+    `</svg>`
+  );
+}
