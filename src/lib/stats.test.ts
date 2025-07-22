@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { Entry } from './log';
-import { dailyPages, genreShare, lastMonths, monthlyPages, streaks, summarize } from './stats';
+import {
+  bookSummaries,
+  dailyPages,
+  genreShare,
+  lastMonths,
+  monthlyPages,
+  streaks,
+  summarize,
+} from './stats';
 
 let seq = 0;
 function entry(date: string, pages: number, genre = '小説', finished = false): Entry {
@@ -75,6 +83,47 @@ describe('genreShare', () => {
 
   it('記録がなければ空配列', () => {
     expect(genreShare([])).toEqual([]);
+  });
+});
+
+describe('bookSummaries', () => {
+  function e(date: string, title: string, pages: number, finished = false, genre = '小説'): Entry {
+    return { id: `b${seq++}`, date, title, pages, genre, finished };
+  }
+
+  it('書名ごとにページと回数を集計する', () => {
+    const r = bookSummaries([
+      e('2026-06-01', 'こころ', 40),
+      e('2026-06-03', 'こころ', 60, true),
+      e('2026-06-02', '人間失格', 30),
+    ]);
+    const kokoro = r.find((b) => b.title === 'こころ');
+    expect(kokoro?.pages).toBe(100);
+    expect(kokoro?.sessions).toBe(2);
+    expect(kokoro?.finished).toBe(true);
+    expect(kokoro?.firstDate).toBe('2026-06-01');
+    expect(kokoro?.lastDate).toBe('2026-06-03');
+  });
+
+  it('最後に読んだ日の新しい順に並べる', () => {
+    const r = bookSummaries([
+      e('2026-06-01', 'A', 10),
+      e('2026-06-05', 'B', 10),
+      e('2026-06-03', 'C', 10),
+    ]);
+    expect(r.map((b) => b.title)).toEqual(['B', 'C', 'A']);
+  });
+
+  it('ジャンルは直近の記録のものを採る', () => {
+    const r = bookSummaries([
+      e('2026-06-01', 'X', 10, false, '小説'),
+      e('2026-06-04', 'X', 10, false, '技術書'),
+    ]);
+    expect(r[0]?.genre).toBe('技術書');
+  });
+
+  it('記録がなければ空配列', () => {
+    expect(bookSummaries([])).toEqual([]);
   });
 });
 

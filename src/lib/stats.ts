@@ -31,6 +31,16 @@ export interface Summary {
   longestStreak: number;
 }
 
+export interface BookSummary {
+  title: string;
+  genre: string; // 直近の記録のジャンル
+  pages: number; // 累計ページ
+  sessions: number; // 記録回数
+  finished: boolean;
+  firstDate: string;
+  lastDate: string;
+}
+
 function toUtc(date: string): number {
   const [y, m, d] = date.split('-').map(Number);
   return Date.UTC(y ?? 0, (m ?? 1) - 1, d ?? 1);
@@ -106,6 +116,37 @@ export function genreShare(entries: Entry[], top = 6): GenreShare[] {
     shares.push({ genre: 'その他', pages: restPages, ratio: restPages / total });
   }
   return shares;
+}
+
+// 書名ごとに記録をまとめ、最後に読んだ日の新しい順に返す。
+export function bookSummaries(entries: Entry[]): BookSummary[] {
+  const byTitle = new Map<string, BookSummary>();
+  for (const e of entries) {
+    const cur = byTitle.get(e.title);
+    if (cur === undefined) {
+      byTitle.set(e.title, {
+        title: e.title,
+        genre: e.genre,
+        pages: e.pages,
+        sessions: 1,
+        finished: e.finished,
+        firstDate: e.date,
+        lastDate: e.date,
+      });
+      continue;
+    }
+    cur.pages += e.pages;
+    cur.sessions += 1;
+    cur.finished = cur.finished || e.finished;
+    if (e.date < cur.firstDate) cur.firstDate = e.date;
+    if (e.date >= cur.lastDate) {
+      cur.lastDate = e.date;
+      cur.genre = e.genre; // 直近の記録のジャンルを採る
+    }
+  }
+  return [...byTitle.values()].sort(
+    (a, b) => b.lastDate.localeCompare(a.lastDate) || a.title.localeCompare(b.title, 'ja'),
+  );
 }
 
 export function streaks(entries: Entry[], today: string): { current: number; longest: number } {

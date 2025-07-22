@@ -4,7 +4,13 @@
 import { barChart, donutChart, escapeXml, heatmap } from './lib/chart';
 import { demoEntries } from './lib/demo';
 import { toCsv, toMarkdown } from './lib/exporters';
-import { applyQuery, DEFAULT_QUERY, type ListQuery, type SortKey } from './lib/filter';
+import {
+  applyQuery,
+  DEFAULT_QUERY,
+  filterEntries,
+  type ListQuery,
+  type SortKey,
+} from './lib/filter';
 import {
   loadGoals,
   monthProgress,
@@ -16,7 +22,14 @@ import {
 } from './lib/goal';
 import type { Entry, ReadingLog, StorageLike } from './lib/log';
 import { LogError } from './lib/log';
-import { dailyPages, genreShare, monthlyPages, summarize } from './lib/stats';
+import {
+  bookSummaries,
+  dailyPages,
+  genreShare,
+  monthlyPages,
+  summarize,
+  type BookSummary,
+} from './lib/stats';
 import {
   applyTheme,
   loadThemeSetting,
@@ -106,6 +119,7 @@ function download(filename: string, text: string, mime: string): void {
 export function mountApp(root: HTMLElement, log: ReadingLog, storage: StorageLike): void {
   let editingId: string | null = null;
   let showAll = false;
+  let ledgerView: 'entries' | 'books' = 'entries';
   let query: ListQuery = { ...DEFAULT_QUERY };
   let theme: ThemeSetting = loadThemeSetting(storage);
   let goals: Goals = loadGoals(storage);
@@ -207,6 +221,10 @@ export function mountApp(root: HTMLElement, log: ReadingLog, storage: StorageLik
         <div class="section-head">
           <h2 id="ledger-head">記録の一覧</h2>
           <div class="ledger-controls" id="ledger-controls" hidden>
+            <div class="view-toggle" role="tablist" aria-label="表示の切替">
+              <button type="button" id="view-entries" class="view-tab" role="tab" aria-selected="true">記録</button>
+              <button type="button" id="view-books" class="view-tab" role="tab" aria-selected="false">本</button>
+            </div>
             <input type="search" id="search" placeholder="書名・ジャンルで絞る" aria-label="一覧を絞り込む">
             <select id="genre-filter" aria-label="ジャンルで絞る"></select>
             <label class="check small"><input type="checkbox" id="finished-filter">読了のみ</label>
@@ -412,11 +430,44 @@ export function mountApp(root: HTMLElement, log: ReadingLog, storage: StorageLik
     select.value = query.genre;
     $<HTMLInputElement>('#search').value = query.text;
     $<HTMLInputElement>('#finished-filter').checked = query.finishedOnly;
+    const onEntries = ledgerView === 'entries';
+    $<HTMLButtonElement>('#view-entries').setAttribute('aria-selected', String(onEntries));
+    $<HTMLButtonElement>('#view-books').setAttribute('aria-selected', String(!onEntries));
   }
 
   function sortIndicator(key: SortKey): string {
     if (query.sortKey !== key) return '';
     return query.sortDir === 'asc' ? ' ▲' : ' ▼';
+  }
+
+  function renderBooks(): void {
+    const filtered = filterEntries(log.all(), { ...query, finishedOnly: false });
+    let books: BookSummary[] = bookSummaries(filtered);
+    if (query.finishedOnly) books = books.filter((b) => b.finished);
+    if (books.length === 0) {
+      $('#entries').innerHTML = `<p class="no-match">条件に合う本がありません。</p>`;
+      return;
+    }
+    const visible = showAll ? books : books.slice(0, RECENT_LIMIT);
+    const rows = visible
+      .map(
+        (b) => `
+        <li class="book">
+          <div class="book-main">
+            <p class="book-title">${esc(b.title)}${b.finished ? '<span class="badge">読了</span>' : '<span class="badge reading">読書中</span>'}</p>
+            <p class="book-meta">${esc(b.genre)}・${b.sessions}回・${dateLabel(b.firstDate)}〜${dateLabel(b.lastDate)}</p>
+          </div>
+          <p class="book-pages"><span class="num">${jp(b.pages)}</span><span class="unit">ページ</span></p>
+        </li>`,
+      )
+      .join('');
+    const more =
+      books.length > RECENT_LIMIT
+        ? `<button type="button" id="toggle-all" class="text-btn">${
+            showAll ? '直近だけ表示' : `すべて表示(全${books.length}冊)`
+          }</button>`
+        : '';
+    $('#entries').innerHTML = `<ul class="book-list">${rows}</ul>${more}`;
   }
 
   function renderEntries(): void {
@@ -428,6 +479,10 @@ export function mountApp(root: HTMLElement, log: ReadingLog, storage: StorageLik
           <p>記録がまだありません。上のフォームから1件目を付けるか、デモデータで画面の雰囲気を確かめられます。</p>
           <button type="button" id="demo" class="text-btn">デモデータを入れる</button>
         </div>`;
+      return;
+    }
+    if (ledgerView === 'books') {
+      renderBooks();
       return;
     }
     const matched = applyQuery(all, query);
@@ -533,15 +588,23 @@ export function mountApp(root: HTMLElement, log: ReadingLog, storage: StorageLik
     renderEntries();
   });
 
-  $('#ledger-controls').parentElement?.addEventListener('click', (e) => {
-    const sort = (e.target as HTMLElement).closest<HTMLElement>('[data-sort]');
-    if (sort !== null) {
-      toggleSort(sort.dataset.sort as SortKey);
-    }
-  });
+  function setView(view: 'entries' | 'books'): void {
+    if (ledgerView === view) return;
+    ledgerView = view;
+    showAll = false;
+    renderControls();
+    renderEntries();
+  }
+  $('#view-entries').addEventListener('click', () => setView('entries'));
+  $('#view-books').addEventListener('click', () => setView('books'));
 
   $('#entries').addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
+    const sort = target.closest<HTMLElement>('[data-sort]');
+    if (sort !== null) {
+      toggleSort(sort.dataset.sort as SortKey);
+      return;
+    }
     if (target.closest('#demo') !== null) {
       for (const entry of demoEntries(todayLocal())) log.add(entry);
       toast('デモデータを入れました。消すときは下の「すべての記録を消す」から');
@@ -632,8 +695,26 @@ export function mountApp(root: HTMLElement, log: ReadingLog, storage: StorageLik
 
   $('#theme').addEventListener('click', cycleTheme);
 
+  // 書き出しメニューは外側クリックとEscで閉じる。
+  const exportMenu = $<HTMLDetailsElement>('#export-menu');
+  document.addEventListener('click', (e) => {
+    if (exportMenu.open && !exportMenu.contains(e.target as Node)) {
+      exportMenu.open = false;
+    }
+  });
+
   // キーボード操作。入力中はショートカットを横取りしない。
   document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (exportMenu.open) {
+        exportMenu.open = false;
+        return;
+      }
+      if (editingId !== null) {
+        resetForm();
+        return;
+      }
+    }
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     const el = e.target as HTMLElement;
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)) return;
