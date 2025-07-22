@@ -5,10 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="読書統計ダッシュボード。読んだページを記録すると、月間ページ数やジャンル分布をSVGチャートで眺められる。"
+      content="読書統計ダッシュボード。読んだページを記録すると、月間ページ数・ジャンル分布・年間の読書ヒートマップ・目標の進み具合をSVGで眺められる。"
     />
+    <meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#17140f" media="(prefers-color-scheme: dark)" />
     <link rel="icon" type="image/svg+xml" href="./logo.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <title>yomilog — 読書統計ダッシュボード</title>
+    <script>
+      // 描画前にテーマを確定してちらつきを防ぐ。app側のtheme.tsと規則を合わせる。
+      (function () {
+        try {
+          var t = localStorage.getItem('yomilog:theme');
+          if (t === 'light' || t === 'dark') {
+            document.documentElement.setAttribute('data-theme', t);
+          }
+        } catch (e) {
+          /* localStorageが使えない環境では既定(OS追従)に任せる */
+        }
+        document.documentElement.classList.add('js');
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>
