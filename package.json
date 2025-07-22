@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "読書統計ダッシュボード。月間ページ数やジャンル分布をSVGチャートで表示",
+  "description": "読書統計ダッシュボード。月間ページ数・ジャンル分布・年間ヒートマップ・目標進捗をSVGで表示",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -19,7 +19,7 @@
     "prettier": "^3.3.0",
     "typescript": "^5.6.0",
     "typescript-eslint": "^8.0.0",
-    "vite": "^6.0.0",
-    "vitest": "^2.1.0"
+    "vite": "^8.0.0",
+    "vitest": "^4.0.0"
   }
 }
