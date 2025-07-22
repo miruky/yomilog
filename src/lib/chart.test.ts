@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { arcPath, barChart, donutChart, escapeXml, niceMax } from './chart';
+import { arcPath, barChart, donutChart, escapeXml, heatLevel, heatmap, niceMax } from './chart';
 
 describe('niceMax', () => {
   it('1・2・2.5・5の系列へ切り上げる', () => {
@@ -99,6 +99,52 @@ describe('donutChart', () => {
 
   it('空データでもaria-labelを付けて返す', () => {
     expect(donutChart([])).toContain('データなし');
+  });
+});
+
+describe('heatLevel', () => {
+  it('0ページは段階0', () => {
+    expect(heatLevel(0, 100)).toBe(0);
+  });
+
+  it('最大値に対する比率で1〜4へ割る', () => {
+    expect(heatLevel(20, 100)).toBe(1);
+    expect(heatLevel(50, 100)).toBe(2);
+    expect(heatLevel(70, 100)).toBe(3);
+    expect(heatLevel(100, 100)).toBe(4);
+  });
+
+  it('最大値0なら段階0', () => {
+    expect(heatLevel(10, 0)).toBe(0);
+  });
+});
+
+describe('heatmap', () => {
+  const days = [
+    { date: '2026-06-11', pages: 40, weekday: 4 },
+    { date: '2026-06-12', pages: 0, weekday: 5 },
+    { date: '2026-06-13', pages: 80, weekday: 6 },
+  ];
+
+  it('日数ぶんのマスを描き、ページ数をtitleに入れる', () => {
+    const svg = heatmap(days);
+    expect(svg.match(/class="heat-cell/g)).toHaveLength(3);
+    expect(svg).toContain('2026-06-13: 80ページ');
+    expect(svg).toContain('2026-06-12: 記録なし');
+  });
+
+  it('活動日数をaria-labelに含める', () => {
+    expect(heatmap(days)).toContain('3日のうち2日に記録あり');
+  });
+
+  it('最大ページの日は段階4になる', () => {
+    expect(heatmap(days)).toContain('lvl-4');
+  });
+
+  it('空データでも壊れず描く', () => {
+    const svg = heatmap([]);
+    expect(svg).toContain('記録なし');
+    expect(svg).toContain('class="chart-heat"');
   });
 });
 
