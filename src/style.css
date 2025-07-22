@@ -902,6 +902,80 @@ select {
   padding: 6px 10px;
 }
 
+.view-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding-right: 4px;
+}
+
+.view-tab {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  padding: 4px 10px;
+  border-radius: 999px;
+  transition:
+    color 0.15s var(--ease),
+    background 0.15s var(--ease);
+}
+
+.view-tab[aria-selected='true'] {
+  color: var(--paper-2);
+  background: var(--accent);
+}
+
+.view-tab[aria-selected='false']:hover {
+  color: var(--ink);
+}
+
+/* 本ごとの一覧 */
+
+.book-list {
+  list-style: none;
+}
+
+.book {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.book-title {
+  font-family: var(--serif);
+  font-size: 1.0625rem;
+  font-weight: 500;
+}
+
+.book-meta {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.book-pages {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.book-pages .num {
+  font-family: var(--serif);
+  font-size: 1.25rem;
+}
+
+.book-pages .unit {
+  font-size: 0.74rem;
+  color: var(--muted);
+  margin-left: 4px;
+}
+
+.badge.reading {
+  color: var(--muted);
+  border-color: var(--line);
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
